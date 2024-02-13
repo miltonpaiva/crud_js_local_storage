@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>crud js local storage</title>
+</head>
+<body>
+
+<input type="text" placeholder="informe o titulo do item">
+<button id="inserir">inserir</button>
+
+<ul>
+</ul>
+
+<script>
+	let button = document.querySelector('#inserir');
+
+	// setando um gatilho ao botão de inserir o item
+	button.addEventListener("click", function() {
+  		createItem();
+	});
+
+	/**
+	 * cria um item no local storage
+	 */
+	function createItem() {
+		let input  = document.querySelector('input');
+
+		let item =
+		{
+			'id':         getId(),
+			'date':       new Date().toJSON(),
+			'item_value': input.value,
+		}
+
+		insertLocalItem(item);
+
+		input.value = '';
+	}
+
+	/**
+	 * retorna uma string unica para uso no id
+	 *
+	 * @return     {string}  The identifier.
+	 */
+	function getId() {
+		return Math.random().toString(16).slice(2);
+	}
+
+	/**
+	 * insere um objeto/array no local storage
+	 *
+	 * @param      {object|array}  data    The data
+	 */
+	function insertLocalItem(data) {
+
+		let all_data = listLocalItens('all_items');
+
+		all_data.push(data);
+
+		localStorage.setItem('all_items', JSON.stringify(all_data));
+
+		montUlItens();
+	}
+
+	/**
+	 * retorna a lista de itens conforme o slug passado
+	 *
+	 * @param      {string}  slug    The slug
+	 * @return     {object|array}
+	 */
+	function listLocalItens(slug) {
+		let str_itens = localStorage.getItem(slug) ?? '[]';
+
+		return JSON.parse(str_itens);
+	}
+
+	/**
+	 * monta os itens da ul de itens
+	 */
+	function montUlItens() {
+		let ul = document.querySelector('ul');
+
+		let items = listLocalItens('all_items');
+
+		let html = '';
+
+		for(item of items){
+			html += getUlTemplate(item);
+		}
+
+		ul.innerHTML = html;
+
+		setItensBtnsTrigger();
+	}
+
+	/**
+	 * retorna o template do item
+	 *
+	 * @param      {object}   item    The item
+	 * @return     {string}  The ul template.
+	 */
+	function getUlTemplate(item) {
+		return `
+			<li> [${item.id}] ${item.item_value} - ${item.date} <button class="update" item_id="${item.id}">atualizar</button> <button class="delete" item_id="${item.id}">remover</button> </li>
+		`;
+	}
+
+	/**
+	 * seta um gatilho aos botões de update e delete dos itens
+	 */
+	function setItensBtnsTrigger() {
+		let btns_update = document.querySelectorAll('.update');
+		let btns_delete = document.querySelectorAll('.delete');
+
+		// setando um gatilho aoS botões de atualizar
+		for(btn_update of btns_update){
+			btn_update.addEventListener("click", function(event) {
+				let item_id = event.target.getAttribute('item_id');
+				updateDateItem(item_id);
+			});
+		}
+
+		// setando um gatilho aoS botões de atualizar
+		for(btn_delete of btns_delete){
+			btn_delete.addEventListener("click", function(event) {
+				let item_id = event.target.getAttribute('item_id');
+				deleteItem(item_id);
+			});
+		}
+	}
+
+	/**
+	 * atualiza a data do item
+	 *
+	 * @param      {string}  item_id  The item identifier
+	 */
+	function updateDateItem(item_id) {
+		let items    = listLocalItens('all_items');
+		let item_key = searchByColumn(items, 'id', item_id);
+
+		items[item_key].date = new Date().toJSON();
+
+		localStorage.setItem('all_items', JSON.stringify(items));
+
+		montUlItens();
+	}
+
+	/**
+	 * procura em um array de objetos por um valor em uma coluna especidica
+	 *
+	 * @param      {array}       array_of_objects  The array of objects
+	 * @param      {string}      column            The column
+	 * @param      {string|int}  value             The value
+	 * @return     {number|null} key do item
+	 */
+	function searchByColumn(array_of_objects, column, value){
+	    for (let key=0; key < array_of_objects.length; key++) {
+	        if (array_of_objects[key][column] === value) {
+	            return key;
+	        }
+	    }
+
+	    return null;
+	}
+
+	/**
+	 * remove um item da lista
+	 *
+	 * @param      {string}  item_id  The item identifier
+	 */
+	function deleteItem(item_id) {
+		let items    = listLocalItens('all_items');
+		let item_key = searchByColumn(items, 'id', item_id);
+
+		items.splice(item_key, 1);
+
+		localStorage.setItem('all_items', JSON.stringify(items));
+
+		montUlItens();
+	}
+
+	// montando os itens ja salvos no primeiro load da tela
+	montUlItens();
+</script>
+</body>
+</html>
